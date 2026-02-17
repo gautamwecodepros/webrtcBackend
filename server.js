@@ -4,6 +4,9 @@ const { Server } = require("socket.io");
 
 const app = express();
 
+// Railway proxy support
+app.set("trust proxy", true);
+
 // Health check
 app.get("/", (req, res) => {
   res.send("WebRTC signaling alive");
@@ -11,7 +14,9 @@ app.get("/", (req, res) => {
 
 const server = http.createServer(app);
 
+// Socket.IO setup for Railway
 const io = new Server(server, {
+  transports: ["websocket", "polling"],
   cors: {
     origin: "*",
     methods: ["GET", "POST"],
@@ -41,6 +46,7 @@ io.on("connection", (socket) => {
   });
 });
 
+// Railway dynamic port
 const PORT = process.env.PORT || 5000;
 
 server.listen(PORT, () => {
