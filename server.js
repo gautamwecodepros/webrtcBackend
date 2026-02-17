@@ -36,6 +36,9 @@ io.on("connection", (socket) => {
   socket.on("ice-candidate", ({ to, candidate }) => {
     io.to(to).emit("ice-candidate", candidate);
   });
+  socket.on("call-ended", ({ to }) => {
+    io.to(to).emit("call-ended");
+  });
 });
 
 const PORT = process.env.PORT || 3000;
