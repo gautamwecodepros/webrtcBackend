@@ -1,11 +1,10 @@
 const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
-require("dotenv").config();
 
 const app = express();
 
-// Railway health check route
+// health check
 app.get("/", (req, res) => {
   res.send("Server alive");
 });
