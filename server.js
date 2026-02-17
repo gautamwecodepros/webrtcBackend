@@ -4,7 +4,6 @@ const { Server } = require("socket.io");
 
 const app = express();
 
-// health check
 app.get("/", (req, res) => {
   res.send("Server alive");
 });
@@ -19,25 +18,59 @@ const io = new Server(server, {
   },
 });
 
+const users = {}; // code → socketId
+
+function generateCode() {
+  return Math.floor(1000 + Math.random() * 9000).toString();
+}
+
 io.on("connection", (socket) => {
-  console.log("Connected:", socket.id);
+  let code;
+
+  do {
+    code = generateCode();
+  } while (users[code]);
+
+  users[code] = socket.id;
+
+  console.log("Connected:", socket.id, "Code:", code);
+
+  socket.emit("your-code", code);
 
   socket.on("call-user", ({ to, offer }) => {
-    io.to(to).emit("incoming-call", {
-      from: socket.id,
-      offer,
-    });
+    const target = users[to];
+    if (target) {
+      io.to(target).emit("incoming-call", {
+        from: code,
+        offer,
+      });
+    }
   });
 
   socket.on("answer-call", ({ to, answer }) => {
-    io.to(to).emit("call-accepted", { answer });
+    const target = users[to];
+    if (target) {
+      io.to(target).emit("call-accepted", { answer });
+    }
   });
 
   socket.on("ice-candidate", ({ to, candidate }) => {
-    io.to(to).emit("ice-candidate", candidate);
+    const target = users[to];
+    if (target) {
+      io.to(target).emit("ice-candidate", candidate);
+    }
   });
+
   socket.on("call-ended", ({ to }) => {
-    io.to(to).emit("call-ended");
+    const target = users[to];
+    if (target) {
+      io.to(target).emit("call-ended");
+    }
+  });
+
+  socket.on("disconnect", () => {
+    delete users[code];
+    console.log("Disconnected:", code);
   });
 });
 
