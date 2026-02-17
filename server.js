@@ -12,13 +12,10 @@ const server = http.createServer(app);
 
 const io = new Server(server, {
   transports: ["websocket", "polling"],
-  cors: {
-    origin: "*",
-    methods: ["GET", "POST"],
-  },
+  cors: { origin: "*" },
 });
 
-const users = {}; // code → socketId
+const users = {};
 
 function generateCode() {
   return Math.floor(1000 + Math.random() * 9000).toString();
@@ -26,14 +23,11 @@ function generateCode() {
 
 io.on("connection", (socket) => {
   let code;
-
   do {
     code = generateCode();
   } while (users[code]);
 
   users[code] = socket.id;
-
-  console.log("Connected:", socket.id, "Code:", code);
 
   socket.emit("your-code", code);
 
@@ -70,12 +64,8 @@ io.on("connection", (socket) => {
 
   socket.on("disconnect", () => {
     delete users[code];
-    console.log("Disconnected:", code);
   });
 });
 
 const PORT = process.env.PORT || 3000;
-
-server.listen(PORT, "0.0.0.0", () => {
-  console.log("Server running on port", PORT);
-});
+server.listen(PORT, "0.0.0.0");
