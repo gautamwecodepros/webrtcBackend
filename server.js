@@ -1,20 +1,17 @@
 const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
+require("dotenv").config();
 
 const app = express();
 
-// Railway proxy support
-app.set("trust proxy", true);
-
-// Health check
+// Railway health check route
 app.get("/", (req, res) => {
-  res.send("WebRTC signaling alive");
+  res.send("Server alive");
 });
 
 const server = http.createServer(app);
 
-// Socket.IO setup for Railway
 const io = new Server(server, {
   transports: ["websocket", "polling"],
   cors: {
@@ -40,15 +37,10 @@ io.on("connection", (socket) => {
   socket.on("ice-candidate", ({ to, candidate }) => {
     io.to(to).emit("ice-candidate", candidate);
   });
-
-  socket.on("disconnect", () => {
-    console.log("Disconnected:", socket.id);
-  });
 });
 
-// Railway dynamic port
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3000;
 
-server.listen(PORT, () => {
-  console.log("Server running on", PORT);
+server.listen(PORT, "0.0.0.0", () => {
+  console.log("Server running on port", PORT);
 });
