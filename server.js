@@ -3,15 +3,24 @@ const http = require("http");
 const { Server } = require("socket.io");
 
 const app = express();
+
+// Health check
+app.get("/", (req, res) => {
+  res.send("WebRTC signaling alive");
+});
+
 const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
     origin: "*",
+    methods: ["GET", "POST"],
   },
 });
 
 io.on("connection", (socket) => {
+  console.log("Connected:", socket.id);
+
   socket.on("call-user", ({ to, offer }) => {
     io.to(to).emit("incoming-call", {
       from: socket.id,
@@ -20,16 +29,20 @@ io.on("connection", (socket) => {
   });
 
   socket.on("answer-call", ({ to, answer }) => {
-    io.to(to).emit("call-accepted", {
-      answer,
-    });
+    io.to(to).emit("call-accepted", { answer });
   });
 
   socket.on("ice-candidate", ({ to, candidate }) => {
     io.to(to).emit("ice-candidate", candidate);
   });
+
+  socket.on("disconnect", () => {
+    console.log("Disconnected:", socket.id);
+  });
 });
 
-server.listen(5000, () => {
-  console.log("Server running on 5000");
+const PORT = process.env.PORT || 5000;
+
+server.listen(PORT, () => {
+  console.log("Server running on", PORT);
 });
